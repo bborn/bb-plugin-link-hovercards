@@ -122,6 +122,19 @@ function place(anchor: DOMRect, card: { width: number; height: number }) {
   return { left, top };
 }
 
+/** The link that replaced `lost` in the page: the one under the pointer, else the only one left. */
+function relink(lost: Hovered, at: { x: number; y: number } | null, card: HTMLElement): Hovered | null {
+  const href = lost.anchor.href;
+  const under = at === null ? null : document.elementFromPoint(at.x, at.y)?.closest("a[href]");
+  if (under instanceof HTMLAnchorElement && under.href === href && !card.contains(under)) {
+    return { ref: lost.ref, anchor: under };
+  }
+  const same = Array.from(document.querySelectorAll<HTMLAnchorElement>("a[href]")).filter(
+    (anchor) => anchor.href === href && !card.contains(anchor),
+  );
+  return same.length === 1 ? { ref: lost.ref, anchor: same[0]! } : null;
+}
+
 function HoverCardOverlay() {
   const portalScope = usePortalScopeProps();
   const [hovered, setHovered] = useState<Hovered | null>(null);
@@ -131,6 +144,8 @@ function HoverCardOverlay() {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const hoveredRef = useRef<Hovered | null>(null);
   const openTimer = useRef<number | undefined>(undefined);
+  /** Where the pointer last was, to find a link again after it re-renders. */
+  const pointer = useRef<{ x: number; y: number } | null>(null);
   const closeTimer = useRef<number | undefined>(undefined);
 
   const show = useCallback((next: Hovered | null) => {
@@ -157,6 +172,7 @@ function HoverCardOverlay() {
 
     const onOver = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
+      pointer.current = { x: event.clientX, y: event.clientY };
       if (cardRef.current?.contains(event.target as Node)) return;
       const next = linkAnchor(event.target);
       if (next === null) return;
@@ -200,8 +216,10 @@ function HoverCardOverlay() {
         show(next);
       }, LONG_PRESS_MS);
       press = { x: event.clientX, y: event.clientY, timer };
+      pointer.current = { x: event.clientX, y: event.clientY };
     };
     const onMove = (event: PointerEvent) => {
+      if (event.pointerType !== "touch") pointer.current = { x: event.clientX, y: event.clientY };
       if (press === null) return;
       if (Math.hypot(event.clientX - press.x, event.clientY - press.y) > LONG_PRESS_SLOP_PX) endPress();
     };
@@ -221,13 +239,15 @@ function HoverCardOverlay() {
       if (event.key === "Escape") dismiss();
     };
     // Live threads scroll on their own as messages stream in: the card follows
-    // its link, and only closes once the link leaves the screen.
+    // its link (the layout effect re-places it, or closes it once the link
+    // leaves the screen). Scrolling elsewhere, like a thread beside a panel,
+    // leaves the card alone.
     const onScroll = (event: Event) => {
       const open = hoveredRef.current;
-      if (open === null || cardRef.current?.contains(event.target as Node)) return;
-      const rect = open.anchor.getBoundingClientRect();
-      if (!open.anchor.isConnected || rect.bottom < 0 || rect.top > window.innerHeight) dismiss();
-      else setScrolled((count) => count + 1);
+      if (open === null) return;
+      const target = event.target;
+      if (target instanceof Node && target !== document && open.anchor.isConnected && !target.contains(open.anchor)) return;
+      setScrolled((count) => count + 1);
     };
     const onDown = (event: PointerEvent) => {
       endPress();
@@ -273,10 +293,19 @@ function HoverCardOverlay() {
     const card = cardRef.current;
     if (hovered === null || card === null) return;
     if (!hovered.anchor.isConnected) {
+      // Markdown re-renders (a streaming message, a refreshed preview) swap
+      // the link element for an identical one. Follow it instead of closing.
+      const again = relink(hovered, pointer.current, card);
+      if (again === null) show(null);
+      else show(again);
+      return;
+    }
+    const rect = hovered.anchor.getBoundingClientRect();
+    if (rect.bottom < 0 || rect.top > window.innerHeight) {
       show(null);
       return;
     }
-    const next = place(hovered.anchor.getBoundingClientRect(), {
+    const next = place(rect, {
       width: card.offsetWidth,
       height: card.offsetHeight,
     });
