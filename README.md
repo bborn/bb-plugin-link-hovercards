@@ -4,6 +4,11 @@ A [BB](https://getbb.app) plugin. Rest the pointer on a GitHub or Linear link
 anywhere in BB, or long-press it on a touch screen, and a card shows what it
 points at. You don't have to leave the thread.
 
+<p>
+  <img src="docs/screenshots/pull-request.png" alt="Hover card for a GitHub pull request: open, branches, 11 checks passed, changes requested, labels, +9 −2 across 2 files" width="49%">
+  <img src="docs/screenshots/issue.png" alt="Hover card for a GitHub issue: open, description excerpt, labels, 6 comments" width="49%">
+</p>
+
 | Link | The card shows |
 | --- | --- |
 | GitHub pull request | open / draft / merged / closed, title, description, base ← head, CI checks, review decision, merge conflicts, labels, lines changed, files, author, last activity |
