@@ -1,10 +1,10 @@
 {
   "name": "bb-plugin-link-hovercards",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "engines": {
     "bb": ">=0.44",
-    "bbPluginSdk": ">=0.5.30"
+    "bbPluginSdk": ">=0.5.29"
   },
   "bb": {
     "name": "Link Hovercards",
@@ -21,7 +21,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@get-bb/plugin-sdk": "0.5.30",
+    "@get-bb/plugin-sdk": "0.5.29",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",

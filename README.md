@@ -30,6 +30,7 @@ Or install **Link Hovercards** from the BB Community marketplace.
 
 ## Requirements
 
+- **BB 0.44 or newer** (plugin SDK 0.5.29+).
 - **GitHub:** the [GitHub CLI](https://cli.github.com) signed in (`gh auth login`)
   on the machine that runs the BB server. Cards show what that account can see.
 - **Linear (optional):** a personal API key from Linear → Settings → Security &
